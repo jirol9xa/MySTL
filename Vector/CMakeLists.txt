@@ -15,9 +15,15 @@ endif ()
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mavx2")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,leak,undefined -Wall -Wextra -Wpedantic -g -O0")
 
+include_directories(../Except)
+
 set(MAIN main.cpp)
 
 add_executable(main ${MAIN})
+
+add_subdirectory(../Except)
+
+target_link_libraries(main Exception)
 
 find_program(CLANG_FORMAT "clang-format")
 if(CLANG_FORMAT)
