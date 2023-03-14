@@ -20,8 +20,9 @@ template <typename T> class Vector
     Vector(const int capacity);
     /// Ctor, that takes a number the number of elements and their value
     Vector(const int size, const T &elems_value);
-    // Vector(std::initializer_list<T>);
+    Vector(std::initializer_list<T>);
 
+    Vector(const Vector &that);
     Vector(Vector &&); // Make version based on noexcept attribute of T(&&)
     Vector<T> &operator=(const Vector &);
     Vector<T> &operator=(Vector &&);
@@ -37,6 +38,53 @@ template <typename T> class Vector
     const T &front() const;
     T       &back();
     const T &back() const;
+
+    template <typename U>
+    struct VecIterator : public std::iterator<std::random_access_iterator_tag, U>
+    {
+        U *val_;
+
+        VecIterator(T *val) : val_(val) {}
+
+        VecIterator(const VecIterator &that) { val_ = that.val_; }
+
+        // clang-format off
+        bool operator==(const VecIterator &that) { return val_ == that.val_; }
+        bool operator!=(const VecIterator &that) { return val_ != that.val_; }
+        bool operator> (const VecIterator &that) { return val_ > that.val_;  }
+        bool operator< (const VecIterator &that) { return val_ < that.val_;  }
+        bool operator>=(const VecIterator &that) { return val_ >= that.val_; }
+        bool operator<=(const VecIterator &that) { return val_ <= that.val_; }
+
+        typename VecIterator::reference operator*() { return *val_; }
+
+        VecIterator operator++()    { ++val_; return *this; }
+        VecIterator operator++(int) { return VecIterator(val_++); }
+        VecIterator operator--()    { --val_; return *this; }
+        VecIterator operator--(int) { return VecIterator(val_--); }
+       
+        using diff_t = typename VecIterator::difference_type;
+
+        VecIterator &operator+=(const diff_t n);
+        VecIterator &operator-=(const diff_t n);
+        VecIterator  operator+ (const diff_t n);
+        VecIterator  operator- (const diff_t n);
+
+        diff_t operator- (const VecIterator &that);
+
+        T &operator[](const int_fast32_t n);
+        // clang-format on
+    };
+
+    using iterator       = VecIterator<T>;
+    using const_iterator = VecIterator<const T>;
+
+    // clang-format off
+    iterator       begin()       { return       iterator(data_); }
+    const_iterator begin() const { return const_iterator(data_); };
+    iterator       end()         { return       iterator(data_ + size_); }
+    const_iterator end()   const { return const_iterator(data_ + size_); }
+    // clang-format on
 };
 
 template <typename T> Vector<T>::Vector()
@@ -75,18 +123,22 @@ Vector<T>::Vector(const int size, const T &elem_value) : Vector<T>(size)
 {
     size_ = size;
 
-    for (int i = 0; i < size; ++i)
-        data_[i] = elem_value;
-
-    // TODO: Implement with iterators
-    //for (auto &&elem : data_)
-        //elem = elem_value;
+    for (auto &&elem : data_)
+        elem = elem_value;
 }
 
-/*template <typename T>
-Vector<T>::Vector(std::initializer_list<T> init)
+template <typename T>
+Vector<T>::Vector(std::initializer_list<T> init) : Vector<T>(init.size())
 {
-}*/
+    size_ = capacity_;
+    std::copy(init.begin(), init.end(), data_);
+}
+
+template <typename T> Vector<T>::Vector(const Vector &that) : Vector<T>(that.capacity_)
+{
+    size_ = that.size_;
+    std::copy(that.begin(), that.end(), begin());
+}
 
 template <typename T> Vector<T>::Vector(Vector &&that)
 {
@@ -192,3 +244,40 @@ template <typename T> const T &Vector<T>::front() const {}
 template <typename T> T &Vector<T>::back() {}
 
 template <typename T> const T &Vector<T>::back() const {}
+
+template <typename T>
+template <typename U>
+auto Vector<T>::VecIterator<U>::operator+=(const diff_t n) -> VecIterator<U> &
+{
+    data_ += n;
+    return *this;
+}
+
+template <typename T>
+template <typename U>
+auto Vector<T>::VecIterator<U>::operator-=(const diff_t n) -> VecIterator<U> &
+{
+    data_ -= n;
+    return *this;
+}
+
+template <typename T>
+template <typename U>
+auto Vector<T>::VecIterator<U>::operator+(const diff_t n) -> VecIterator<U>
+{
+    return VecIterator(val_ + n);
+}
+
+template <typename T>
+template <typename U>
+auto Vector<T>::VecIterator<U>::operator-(const diff_t n) -> VecIterator<U>
+{
+    return VecIterator(val_ - n);
+}
+
+template <typename T>
+template <typename U>
+auto Vector<T>::VecIterator<U>::operator-(const VecIterator &that) -> diff_t
+{
+    return val_ - that.val_;
+}
