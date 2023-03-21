@@ -39,6 +39,8 @@ template <typename T> class Vector
     T       &back();
     const T &back() const;
 
+    ~Vector() { delete [] data_; }
+
     template <typename U>
     struct VecIterator : public std::iterator<std::random_access_iterator_tag, U>
     {
@@ -237,7 +239,12 @@ template <typename T> const T &Vector<T>::at(int_fast32_t idx) const
     return data_[idx];
 }
 
-template <typename T> T &Vector<T>::front() {}
+template <typename T> T &Vector<T>::front() {
+    if (size_ == 0)
+        throw "Can't take front elem from empty vector";
+
+    return *data_;
+}
 
 template <typename T> const T &Vector<T>::front() const {}
 
