@@ -1,8 +1,10 @@
 #include "TypeSafePrint.hpp"
 
+struct Xui {};
+
 int main()
 {
     int   a   = 10;
-    char *str = "str";
-    safePrint::print("String = %d\n", str);
+    Xui xui;
+    safePrint::print("String = %d\n", a);
 }

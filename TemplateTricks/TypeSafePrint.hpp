@@ -73,7 +73,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            getErrMsg<T>('d');
+            getErrMsg<T>(*str);
             return;
         }
     }
@@ -85,7 +85,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            getErrMsg<T>('c');
+            getErrMsg<T>(*str);
             return;
         }
     }
@@ -97,7 +97,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            getErrMsg<T>('f');
+            getErrMsg<T>(*str);
             return;
         }
     }
@@ -109,7 +109,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            getErrMsg<T>('l');
+            getErrMsg<T>(*str);
             return;
         }
     }
@@ -121,7 +121,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            getErrMsg<T>('g');
+            getErrMsg<T>(*str);
             return;
         }
     }
@@ -133,16 +133,15 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            getErrMsg<T>('s');
+            getErrMsg<T>(*str);
             return;
         }
     }
     else
     {
-        std::cout << "\n!!!ERROR!!! ---> Invalid print flag <" << *++str << ">\n";
-        return;
+        // For case passing string literals
+        std::cout << static_cast<char *>(const_cast<char *>(value));
     }
-
     // Skip print flag
     ++str;
     if constexpr (sizeof...(ArgsT))
