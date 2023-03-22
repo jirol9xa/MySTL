@@ -44,27 +44,13 @@ template <typename T> inline constexpr std::string_view getType()
         return makeString("char *");
 }
 
-template <typename T> inline constexpr std::string_view getErrMsg(char print_flag)
+template <typename T> void getErrMsg(char print_flag)
 {
     constexpr auto err_msg1 = makeString("Error!!! Mismatching of argument type <");
     constexpr auto err_msg2 = makeString("> and passed flag <");
     constexpr auto type_str = getType<T>();
 
-    constexpr size_t size = err_msg1.size() + err_msg2.size() + type_str.size() + 2;
-    char             result_string[size] = {};
-    size_t           i                   = 0;
-
-    for (const auto sym : err_msg1)
-        result_string[i++] = sym;
-    for (const auto sym : type_str)
-        result_string[i++] = sym;
-    for (const auto sym : err_msg2)
-        result_string[i++] = sym;
-
-    result_string[i++] = print_flag;
-    result_string[i++] = '\n';
-
-    return std::string_view{result_string, i};
+    std::cout << err_msg1 << type_str << err_msg2 << print_flag << ">!!!\n";
 }
 
 template <typename T, typename... ArgsT>
@@ -87,7 +73,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            std::cout << getErrMsg<T>('d');
+            getErrMsg<T>('d');
             return;
         }
     }
@@ -99,7 +85,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            std::cout << getErrMsg<T>('c');
+            getErrMsg<T>('c');
             return;
         }
     }
@@ -111,7 +97,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            std::cout << getErrMsg<T>('f');
+            getErrMsg<T>('f');
             return;
         }
     }
@@ -123,7 +109,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            std::cout << getErrMsg<T>('l');
+            getErrMsg<T>('l');
             return;
         }
     }
@@ -135,7 +121,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            std::cout << getErrMsg<T>('g');
+            getErrMsg<T>('g');
             return;
         }
     }
@@ -147,7 +133,7 @@ void print(const char *str, T &&value, ArgsT &&...args)
         }
         else
         {
-            std::cout << getErrMsg<T>('s');
+            getErrMsg<T>('s');
             return;
         }
     }
