@@ -3,7 +3,8 @@
 
 int main()
 {
-    std::cout << Factorial<5>().res << '\n';
+    constexpr int res = Factorial<5>::res;
+    std::cout << res << '\n';
 
     return 0;
 }
