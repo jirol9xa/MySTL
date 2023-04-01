@@ -139,13 +139,14 @@ void print(const char *str, T &&value, ArgsT &&...args)
     }
     else
     {
+        ++str; // Skip 's' flag
         // For case passing string literals
         std::cout << static_cast<char *>(const_cast<char *>(value));
     }
     // Skip print flag
     ++str;
     if constexpr (sizeof...(ArgsT))
-        print(str, std::forward<ArgsT...>(args...));
+        print(str, std::forward<ArgsT>(args)...);
     if constexpr (sizeof...(ArgsT) == 0)
         print(str);
 
