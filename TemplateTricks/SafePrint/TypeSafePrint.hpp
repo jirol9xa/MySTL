@@ -46,11 +46,14 @@ template <typename T> inline constexpr std::string_view getType()
 
 template <typename T> void getErrMsg(char print_flag)
 {
-    constexpr auto err_msg1 = makeString("Error!!! Mismatching of argument type <");
+    constexpr auto err_msg1 =
+        makeString("\n \033[31m Error!!! Mismatching of argument type <");
     constexpr auto err_msg2 = makeString("> and passed flag <");
     constexpr auto type_str = getType<T>();
 
-    std::cout << err_msg1 << type_str << err_msg2 << print_flag << ">!!!\n";
+    std::cout << err_msg1 << "\033[34m" << type_str << "\033[31m" << err_msg2
+              << "\033[34m" << print_flag << "\033[31m"
+              << ">!!!\n \033[0m";
 }
 
 template <typename T, typename... ArgsT>
@@ -145,10 +148,8 @@ void print(const char *str, T &&value, ArgsT &&...args)
     }
     // Skip print flag
     ++str;
-    if constexpr (sizeof...(ArgsT))
-        print(str, std::forward<ArgsT>(args)...);
-    if constexpr (sizeof...(ArgsT) == 0)
-        print(str);
+
+    print(str, std::forward<ArgsT>(args)...);
 
     return;
 }

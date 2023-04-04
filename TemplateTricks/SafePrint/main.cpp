@@ -3,5 +3,5 @@
 int main()
 {
     int a = 10;
-    safePrint::print("int = %d, str = %s, int = %d\n", a, "bebra", 100);
+    safePrint::print("int = %d, str = %d, int = %s\n", a, "bebra", 100);
 }
