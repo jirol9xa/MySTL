@@ -1,5 +1,6 @@
 #include "Unique_ptr.hpp"
 #include <chrono>
+#include <memory>
 
 int main()
 {
@@ -10,7 +11,7 @@ int main()
         // int *ptr = new int;
         // delete ptr;
 
-        Unique_ptr<int[]> ptr = Make_unique<int[]>(10);
+        Unique_ptr<int> ptr = Make_unique<int>(10);
     }
 
     std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
