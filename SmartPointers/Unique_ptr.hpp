@@ -65,8 +65,10 @@ Unique_ptr<T> Make_unique(Args &&...args)
 
 /// make_unique implementation for run-time lenght arrays
 template <typename T, typename = std::enable_if_t<!std::is_bounded_array_v<T>>>
-Unique_ptr<std::remove_extent_t<T>[]> Make_unique(size_t size)
-{ return new std::remove_extent_t<T>[size]; }
+Unique_ptr<T> Make_unique(size_t size)
+{
+    return new std::remove_extent_t<T>[size];
+}
 
 /// make-unique implementation for compile-time lenght arrays
 /// function is explicitly deleted, cause we can't control life-time of stack-located
