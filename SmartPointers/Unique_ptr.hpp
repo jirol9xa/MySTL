@@ -60,17 +60,13 @@ template <typename T, size_t N> class Unique_ptr<T[N]> : public Unique_ptr<T[]>
 template <typename T, typename... Args, typename = std::enable_if_t<!std::is_array_v<T>>>
 Unique_ptr<T> Make_unique(Args &&...args)
 {
-    std::cout << "Single unique called\n";
     return new T(std::forward<Args>(args)...);
 }
 
 /// make_unique implementation for run-time lenght arrays
 template <typename T, typename = std::enable_if_t<!std::is_bounded_array_v<T>>>
 Unique_ptr<std::remove_extent_t<T>[]> Make_unique(size_t size)
-{
-    std::cout << "Array unique called\n";
-    return new std::remove_extent_t<T>[size];
-}
+{ return new std::remove_extent_t<T>[size]; }
 
 /// make-unique implementation for compile-time lenght arrays
 /// function is explicitly deleted, cause we can't control life-time of stack-located
