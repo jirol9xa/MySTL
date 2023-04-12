@@ -7,14 +7,18 @@ int main()
 {
     auto start = std::chrono::system_clock::now();
 
-    for (int i = 0; i < 100000000; ++i)
+    Shared_ptr<int> orig_ptr(new int);
+
+    for (int i = 0; i < 1000000000; ++i)
     {
         // int *ptr = new int;
         // delete ptr;
 
-        Shared_ptr<int> ptr = Make_shared<int>(10);
+        Shared_ptr<int> ptr(Make_shared<int>());
     }
 
     std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
     std::cout << "duration = " << duration.count() << std::endl;
+
+    std::cout << "final value = " << *orig_ptr << '\n';
 }

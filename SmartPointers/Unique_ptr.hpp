@@ -5,9 +5,6 @@
 #include <stdexcept>
 #include <string>
 
-// For supporting user-defined destructors
-#include <functional>
-
 /// Class for implementing unique-pointer to single object logic
 template <typename T> class Unique_ptr
 {
@@ -20,8 +17,16 @@ template <typename T> class Unique_ptr
     constexpr Unique_ptr(std::nullptr_t) : Unique_ptr() {}
     Unique_ptr(T *ptr) : ptr_(ptr) {}
 
-    void                       reset();
-    template <typename U> void reset(U *ptr);
+    void reset()
+    {
+        delete ptr_;
+        ptr_ = nullptr;
+    }
+    template <typename U> void reset(U *ptr)
+    {
+        delete ptr_;
+        ptr_ = ptr;
+    }
 
     Unique_ptr &operator=(const Unique_ptr &&rhs) noexcept
     {
@@ -56,6 +61,17 @@ template <typename T> class Unique_ptr<T[]>
 
     T *get() { return arr_; }
        operator bool() { return arr_; }
+
+    void reset()
+    {
+        delete[] arr_;
+        arr_ = nullptr;
+    }
+    template <typename U> void reset(U *ptr)
+    {
+        delete[] arr_;
+        arr_ = ptr;
+    }
 
     T &operator[](size_t idx)
     {
