@@ -1,3 +1,4 @@
+#include "Shared_ptr.hpp"
 #include "Unique_ptr.hpp"
 #include <chrono>
 #include <memory>
@@ -11,7 +12,7 @@ int main()
         // int *ptr = new int;
         // delete ptr;
 
-        Unique_ptr<int> ptr = Make_unique<int>(10);
+        Shared_ptr<int> ptr = Make_shared<int>(10);
     }
 
     std::chrono::duration<double> duration = std::chrono::system_clock::now() - start;
