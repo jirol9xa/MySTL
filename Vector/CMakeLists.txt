@@ -17,20 +17,21 @@ endif ()
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mavx2 -std=c++20")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,leak,undefined -Wall -Wextra -Wpedantic -g -O0 -std=c++20")
 
-#include_directories(../Except)
+#include_directories(../ Except)
 
 set(MAIN main.cpp)
 
 add_executable(main ${MAIN})
 
-#add_subdirectory(../Except)
+#add_subdirectory(../ Except)
 
 #target_link_libraries(main Exception)
 
 find_program(CLANG_FORMAT "clang-format")
 if(CLANG_FORMAT)
     file(GLOB_RECURSE ALL_CXX_SOURCE_FILES
-        ${PROJECT_SOURCE_DIR}/*.[ch]pp
+        ${
+    PROJECT_SOURCE_DIR}/*.[ch]pp
         ${PROJECT_SOURCE_DIR}/*.[ch]
     )
 
