@@ -7,9 +7,8 @@
 #include <new>
 #include <type_traits>
 
-// TODO: Need to add chunk class,
-// because all types of allocators neeed to know at leaast size of
-// allocated block
+// TODO: Chunk is not template anymore!!!
+// Implement addElems(size_t N) for GrowingArray
 
 template <size_t CHUNK_SIZE> class Chunk
 {
@@ -54,7 +53,6 @@ template <size_t CHUNK_SIZE = 1024> class AllocStrategy
     size_t min_size_ = 32;
 
   public:
-    int           a                                      = 10;
     virtual void *allocate(size_t obj_amnt)              = 0;
     virtual void  deallocate(void *ptr, size_t obj_amnt) = 0;
 };
@@ -144,8 +142,3 @@ template <size_t CHUNK_SIZE> void *StackStrategy<CHUNK_SIZE>::allocate(size_t ob
     return new_mem;
 }
 
-template <size_t CHUNK_SIZE> void StackStrategy<CHUNK_SIZE>::separateChunks() {}
-
-template <size_t CHUNK_SIZE> void StackStrategy<CHUNK_SIZE>::resize(size_t new_capacity)
-{
-}
