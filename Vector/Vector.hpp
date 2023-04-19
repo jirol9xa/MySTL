@@ -6,9 +6,9 @@
 #include <new>
 #include <string>
 #include <utility>
-#include <vector>
 
-template <typename T> class Vector
+template <typename T, template <typename> class Allocator>
+class Vector : private Allocator<T>
 {
   private:
     T            *data_;
@@ -24,10 +24,19 @@ template <typename T> class Vector
 
     Vector(const Vector &that);
     Vector(Vector &&); // Make version based on noexcept attribute of T(&&)
-    Vector<T> &operator=(const Vector &);
-    Vector<T> &operator=(Vector &&);
+    Vector &operator=(const Vector &);
+    Vector &operator=(Vector &&);
 
+    /// Resizes vector up to capacity = cnt
     void resize(uint_fast32_t cnt);
+
+    void push_back(const T &elem)
+    {
+        if (size_ >= capacity_)
+            resize(size_ * 2);
+
+        data_[size_++] = elem;
+    }
 
     T       &operator[](int_fast32_t idx) noexcept;
     const T &operator[](int_fast32_t idx) const noexcept;
@@ -39,7 +48,17 @@ template <typename T> class Vector
     T       &back();
     const T &back() const;
 
-    ~Vector() { delete[] data_; }
+    ~Vector()
+    {
+        try
+        {
+            Allocator<T>::deallocate(data_);
+        }
+        catch (...)
+        { /* need to process exception*/
+        }
+        // delete[] data_;
+    }
 
     template <typename U>
     struct VecIterator : public std::iterator<std::random_access_iterator_tag, U>
@@ -89,11 +108,11 @@ template <typename T> class Vector
     // clang-format on
 };
 
-template <typename T> Vector<T>::Vector()
+template <typename T, template <typename> class Allocator> Vector<T, Allocator>::Vector()
 {
     try
     {
-        data_ = new T[capacity_];
+        data_ = Allocator<T>::allocate(capacity_); // new T[capacity_];
     }
     catch (const std::bad_alloc &except)
     {
@@ -103,11 +122,12 @@ template <typename T> Vector<T>::Vector()
     }
 }
 
-template <typename T> Vector<T>::Vector(const int capacity) : capacity_(capacity)
+template <typename T, template <typename> class Allocator>
+Vector<T, Allocator>::Vector(const int capacity) : capacity_(capacity)
 {
     try
     {
-        data_ = new T[capacity_];
+        data_ = Allocator<T>::allocate(capacity_); // new T[capacity_];
     }
     catch (const std::bad_alloc &except)
     {
@@ -120,8 +140,8 @@ template <typename T> Vector<T>::Vector(const int capacity) : capacity_(capacity
     }
 }
 
-template <typename T>
-Vector<T>::Vector(const int size, const T &elem_value) : Vector<T>(size)
+template <typename T, template <typename> class Allocator>
+Vector<T, Allocator>::Vector(const int size, const T &elem_value) : Vector(size)
 {
     size_ = size;
 
@@ -129,20 +149,22 @@ Vector<T>::Vector(const int size, const T &elem_value) : Vector<T>(size)
         elem = elem_value;
 }
 
-template <typename T>
-Vector<T>::Vector(std::initializer_list<T> init) : Vector<T>(init.size())
+template <typename T, template <typename> class Allocator>
+Vector<T, Allocator>::Vector(std::initializer_list<T> init) : Vector(init.size())
 {
     size_ = capacity_;
     std::copy(init.begin(), init.end(), data_);
 }
 
-template <typename T> Vector<T>::Vector(const Vector &that) : Vector<T>(that.capacity_)
+template <typename T, template <typename> class Allocator>
+Vector<T, Allocator>::Vector(const Vector &that) : Vector(that.capacity_)
 {
     size_ = that.size_;
     std::copy(that.begin(), that.end(), begin());
 }
 
-template <typename T> Vector<T>::Vector(Vector &&that)
+template <typename T, template <typename> class Allocator>
+Vector<T, Allocator>::Vector(Vector &&that)
 {
     data_     = that.data_;
     size_     = that.size_;
@@ -151,18 +173,21 @@ template <typename T> Vector<T>::Vector(Vector &&that)
     that.data = nullptr;
 }
 
-template <typename T> Vector<T> &Vector<T>::operator=(const Vector &that)
+template <typename T, template <typename> class Allocator>
+Vector<T, Allocator> &Vector<T, Allocator>::operator=(const Vector &that)
 {
     if (&that == this)
         return *this;
 
+    Allocator<T>::deallocate(data_);
+
     size_     = that.size_;
     capacity_ = that.capacity_;
-    delete[] data_;
+    // delete[] data_;
 
     try
     {
-        data_ = new T[capacity_];
+        data_ = Allocator<T>::allocate(capacity_); // new T[capacity_];
     }
     catch (const std::bad_alloc &except)
     {
@@ -177,7 +202,8 @@ template <typename T> Vector<T> &Vector<T>::operator=(const Vector &that)
     // std::copy()
 }
 
-template <typename T> Vector<T> &Vector<T>::operator=(Vector &&that)
+template <typename T, template <typename> class Allocator>
+Vector<T, Allocator> &Vector<T, Allocator>::operator=(Vector &&that)
 {
     if (&that == this)
         return *this;
@@ -189,7 +215,8 @@ template <typename T> Vector<T> &Vector<T>::operator=(Vector &&that)
     that.data = nullptr;
 }
 
-template <typename T> void Vector<T>::resize(uint_fast32_t count)
+template <typename T, template <typename> class Allocator>
+void Vector<T, Allocator>::resize(uint_fast32_t count)
 {
     if (count < size_)
         throw "New capacity too small to contain all existing elems";
@@ -199,7 +226,7 @@ template <typename T> void Vector<T>::resize(uint_fast32_t count)
 
     try
     {
-        new_arr = new T[count];
+        new_arr = Allocator<T>::allocate(count); // new T[count];
     }
     catch (std::bad_alloc)
     {
@@ -209,29 +236,24 @@ template <typename T> void Vector<T>::resize(uint_fast32_t count)
     for (uint_fast32_t i = 0; i < size_; ++i)
         new_arr[i] = std::move_if_noexcept(data_[i]);
 
-    delete[] data_;
+    Allocator<T>::deallocate(data_); // delete[] data_;
     data_ = new_arr;
 }
 
-template <typename T> T &Vector<T>::operator[](int_fast32_t idx) noexcept
+template <typename T, template <typename> class Allocator>
+T &Vector<T, Allocator>::operator[](int_fast32_t idx) noexcept
 {
     return data_[idx];
 }
 
-template <typename T> const T &Vector<T>::operator[](int_fast32_t idx) const noexcept
+template <typename T, template <typename> class Allocator>
+const T &Vector<T, Allocator>::operator[](int_fast32_t idx) const noexcept
 {
     return data_[idx];
 }
 
-template <typename T> T &Vector<T>::at(int_fast32_t idx)
-{
-    if (idx >= size_ || idx < 0)
-        throw "Idx = " + std::to_string(idx) + " out of range";
-
-    return data_[idx];
-}
-
-template <typename T> const T &Vector<T>::at(int_fast32_t idx) const
+template <typename T, template <typename> class Allocator>
+T &Vector<T, Allocator>::at(int_fast32_t idx)
 {
     if (idx >= size_ || idx < 0)
         throw "Idx = " + std::to_string(idx) + " out of range";
@@ -239,7 +261,17 @@ template <typename T> const T &Vector<T>::at(int_fast32_t idx) const
     return data_[idx];
 }
 
-template <typename T> T &Vector<T>::front()
+template <typename T, template <typename> class Allocator>
+const T &Vector<T, Allocator>::at(int_fast32_t idx) const
+{
+    if (idx >= size_ || idx < 0)
+        throw "Idx = " + std::to_string(idx) + " out of range";
+
+    return data_[idx];
+}
+
+template <typename T, template <typename> class Allocator>
+T &Vector<T, Allocator>::front()
 {
     if (size_ == 0)
         throw "Can't take front elem from empty vector";
@@ -247,45 +279,53 @@ template <typename T> T &Vector<T>::front()
     return *data_;
 }
 
-template <typename T> const T &Vector<T>::front() const {}
+template <typename T, template <typename> class Allocator>
+const T &Vector<T, Allocator>::front() const
+{
+}
 
-template <typename T> T &Vector<T>::back() {}
+template <typename T, template <typename> class Allocator> T &Vector<T, Allocator>::back()
+{
+}
 
-template <typename T> const T &Vector<T>::back() const {}
+template <typename T, template <typename> class Allocator>
+const T &Vector<T, Allocator>::back() const
+{
+}
 
-template <typename T>
+template <typename T, template <typename> class Allocator>
 template <typename U>
-auto Vector<T>::VecIterator<U>::operator+=(const diff_t n) -> VecIterator<U> &
+auto Vector<T, Allocator>::VecIterator<U>::operator+=(const diff_t n) -> VecIterator<U> &
 {
     data_ += n;
     return *this;
 }
 
-template <typename T>
+template <typename T, template <typename> class Allocator>
 template <typename U>
-auto Vector<T>::VecIterator<U>::operator-=(const diff_t n) -> VecIterator<U> &
+auto Vector<T, Allocator>::VecIterator<U>::operator-=(const diff_t n) -> VecIterator<U> &
 {
     data_ -= n;
     return *this;
 }
 
-template <typename T>
+template <typename T, template <typename> class Allocator>
 template <typename U>
-auto Vector<T>::VecIterator<U>::operator+(const diff_t n) -> VecIterator<U>
+auto Vector<T, Allocator>::VecIterator<U>::operator+(const diff_t n) -> VecIterator<U>
 {
     return VecIterator(val_ + n);
 }
 
-template <typename T>
+template <typename T, template <typename> class Allocator>
 template <typename U>
-auto Vector<T>::VecIterator<U>::operator-(const diff_t n) -> VecIterator<U>
+auto Vector<T, Allocator>::VecIterator<U>::operator-(const diff_t n) -> VecIterator<U>
 {
     return VecIterator(val_ - n);
 }
 
-template <typename T>
+template <typename T, template <typename> class Allocator>
 template <typename U>
-auto Vector<T>::VecIterator<U>::operator-(const VecIterator &that) -> diff_t
+auto Vector<T, Allocator>::VecIterator<U>::operator-(const VecIterator &that) -> diff_t
 {
     return val_ - that.val_;
 }

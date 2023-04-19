@@ -2,62 +2,62 @@
 
 #include <cstddef>
 #include <cstdlib>
-#include <iostream>
 #include <iterator>
 #include <new>
 #include <type_traits>
 
-// TODO: Chunk is not template anymore!!!
-// Implement addElems(size_t N) for GrowingArray
+#include "GrowingArray.hpp"
 
-template <size_t CHUNK_SIZE> class Chunk
+class Chunk
 {
-    static_assert(CHUNK_SIZE < sizeof(Chunk),
-                  "CHUNK_SIZE must be greater than sizeof(Chunk)");
+    const char *begin_;
+    const char *end_;
 
     // Flag shows, if chunk can be deallocated
-    bool   is_free_ = false;
-    size_t size_    = 0;
+    bool   is_deallocated_ = false;
+    size_t size_           = 0;
 
   public:
-    Chunk(size_t size) : size_(size) {}
+    Chunk() = default;
 
-    template <typename T> bool is_inside(T *ptr)
+    Chunk(const char *begin, const char *end)
+        : begin_(begin), end_(end), size_(end - begin)
+    {
+    }
+    Chunk(const char *begin, const size_t &size)
+        : begin_(begin), end_(begin + size), size_(size)
+    {
+    }
+
+    template <typename T> bool is_inside(T *ptr, size_t obj_amnt = 1)
     {
         if (!size_)
             return false;
-
-        char *ch_this         = reinterpret_cast<char *>(this);
-        char *latest_possible = ch_this + CHUNK_SIZE - sizeof(T);
-
-        return ptr > ch_this && ptr <= latest_possible;
+        return ptr > begin_ &&
+               ((std::conditional_t<std::is_same_v<T, void>, char *, T *>)ptr +
+                obj_amnt) < end_;
     }
 
-    void *allocate()
-    {
-        if (!is_free_)
-            return nullptr;
+    bool isDeallocated() { return is_deallocated_; }
 
-        is_free_ = false;
-        return this + sizeof(Chunk);
-    }
-
-    void deallocate() { is_free_ = true; }
+    void deallocate() { is_deallocated_ = true; }
 };
 
 // We use strategy pattern for implementing allocators with different allocation
 // strategies
-template <size_t CHUNK_SIZE = 1024> class AllocStrategy
+class AllocStrategy
 {
   public:
-    size_t min_size_ = 32;
+    static constexpr size_t min_size_ = 32;
 
   public:
     virtual void *allocate(size_t obj_amnt)              = 0;
     virtual void  deallocate(void *ptr, size_t obj_amnt) = 0;
+
+    virtual ~AllocStrategy() = default;
 };
 
-template <typename T, typename AllocStrategy> class MyOwnAllocator
+template <typename T, template <typename> class AllocStrat> class MyOwnAllocator
 {
   private:
     static_assert(!std::is_same_v<T, void>,
@@ -65,22 +65,27 @@ template <typename T, typename AllocStrategy> class MyOwnAllocator
 
     using size_t = std::size_t;
 
-    AllocStrategy *strategy_;
+    AllocStrat<T> *strategy_;
 
   public:
     using value_type = T;
 
-    MyOwnAllocator();
+    MyOwnAllocator() : strategy_(new AllocStrat<T>()) {}
     template <typename U> MyOwnAllocator(const U &other);
 
-    T *allocate(size_t obj_amnt) { return static_cast<T>(strategy_->allocate(obj_amnt)); }
-    void deallocate(T *ptr, size_t obj_amnt) { strategy_->deallocate(ptr, obj_amnt); }
+    T *allocate(size_t obj_amnt)
+    {
+        return static_cast<T *>(strategy_->allocate(obj_amnt));
+    }
+    void deallocate(T *ptr, size_t obj_amnt = 1) { strategy_->deallocate(ptr, obj_amnt); }
+
+    ~MyOwnAllocator() { delete strategy_; }
 };
 
-template <typename T, typename U, typename AllocStrategy>
+template <typename T, typename U, template <typename> class AllocStrategy>
 bool operator==(const MyOwnAllocator<T, AllocStrategy> &lhs,
                 const MyOwnAllocator<U, AllocStrategy> &rhs);
-template <typename T, typename U, typename AllocStrategy>
+template <typename T, typename U, template <typename> class AllocStrategy>
 bool operator!=(const MyOwnAllocator<T, AllocStrategy> &lhs,
                 const MyOwnAllocator<U, AllocStrategy> &rhs)
 {
@@ -88,57 +93,65 @@ bool operator!=(const MyOwnAllocator<T, AllocStrategy> &lhs,
 }
 
 /// Simple implementation of stack allocation strategy
-template <size_t CHUNK_SIZE = 1024> class StackStrategy : public AllocStrategy<CHUNK_SIZE>
+template <typename T> class StackStrategy : public AllocStrategy
 {
   private:
-    // Capacity and size in objects
-    size_t size_     = 0;
-    size_t capacity_ = AllocStrategy<CHUNK_SIZE>::min_size_;
+    static constexpr size_t TYPE_SIZE = sizeof(T);
 
+    // Capacity and size in objects
+    size_t size_ = 0;
+    size_t capacity_;
     // Real capacity and size in bytes
-    size_t real_size_    = 0;
-    size_t real_capacity = AllocStrategy<CHUNK_SIZE>::min_size_ * CHUNK_SIZE;
+    size_t real_size_ = 0;
+    size_t real_capacity;
 
     // Need to implement good storage for chuncks
-    char *data_ = nullptr;
+    GrowingArray<char> data_;
     // Array of chunks inside the "main" data_ buffer
-    Chunk<CHUNK_SIZE> *chunks = nullptr;
+    GrowingArray<Chunk> chunks_;
 
   public:
-    StackStrategy(size_t capacity)
-        : capacity_(capacity), real_capacity(capacity_ * CHUNK_SIZE)
+    StackStrategy(size_t capacity = AllocStrategy::min_size_)
+        : capacity_(capacity),
+          real_capacity(capacity_ * TYPE_SIZE),
+          data_(real_capacity),
+          chunks_(capacity_)
     {
-        try
-        {
-            data_ = new char[real_capacity];
-        }
-        catch (const std::bad_alloc &except)
-        {
-            std::cout << except.what();
-            throw "StackCtor in StackStrategy except";
-        }
     }
 
     void *allocate(size_t obj_amnt) override;
     void  deallocate(void *ptr, size_t obj_amnt) override;
 
-    ~StackStrategy() { delete[] data_; }
-
   private:
-    /// Function, that separate row memory to chunks
-    void separateChunks();
+    /// As we have stack-like allocator, we must actually deallocate in LIFO model.
+    /// So that method actually deallocates all deallocated chunks from the top of stack.
+    void tryDeallocate()
+    {
+        size_t last_alive = chunks_.getSize();
+        for (; last_alive >= 0; --last_alive)
+            if (!chunks_[last_alive].isDeallocated())
+                break;
 
-    void resize(size_t new_capacity);
+        chunks_.cutArray(last_alive);
+    }
 };
 
-template <size_t CHUNK_SIZE> void *StackStrategy<CHUNK_SIZE>::allocate(size_t obj_amnt)
+template <typename T> void *StackStrategy<T>::allocate(size_t obj_amnt)
 {
-    if (size_ + obj_amnt > capacity_)
-        resize();
+    auto mem   = data_.getSpaceForNElems(obj_amnt * TYPE_SIZE);
+    auto chunk = chunks_.getSpaceForNElems(1);
 
-    char *new_mem = data_[size_];
-    size_ += obj_amnt;
-
-    return new_mem;
+    *chunk = {mem, obj_amnt * TYPE_SIZE};
+    return mem;
 }
 
+template <typename T> void StackStrategy<T>::deallocate(void *ptr, size_t obj_amnt)
+{
+    size_t chunks_amnt = chunks_.getSize();
+    for (size_t i = 0; i < chunks_amnt; ++i)
+    {
+        Chunk &chunk = chunks_[i];
+        if (chunk.is_inside(ptr, obj_amnt))
+            chunk.deallocate();
+    }
+}
