@@ -38,6 +38,14 @@ class Vector : private Allocator<T>
         data_[size_++] = elem;
     }
 
+    void pop_back()
+    {
+        size_--;
+
+        if (capacity_ / size_ >= 2)
+            resize(size_);
+    }
+
     T       &operator[](int_fast32_t idx) noexcept;
     const T &operator[](int_fast32_t idx) const noexcept;
     T       &at(int_fast32_t idx);
