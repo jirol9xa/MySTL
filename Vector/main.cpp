@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+using namespace MySTL;
+
 template <typename T> using StackAlloc = MyOwnAllocator<T, StackStrategy>;
 
 int main()

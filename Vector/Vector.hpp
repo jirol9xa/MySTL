@@ -7,6 +7,8 @@
 #include <string>
 #include <utility>
 
+namespace MySTL {
+
 template <typename T, template <typename> class Allocator>
 class Vector : private Allocator<T>
 {
@@ -336,4 +338,6 @@ template <typename U>
 auto Vector<T, Allocator>::VecIterator<U>::operator-(const VecIterator &that) -> diff_t
 {
     return val_ - that.val_;
+}
+
 }

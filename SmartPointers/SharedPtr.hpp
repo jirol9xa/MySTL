@@ -3,6 +3,9 @@
 #include <atomic>
 #include <cstdlib>
 
+namespace MySTL
+{
+
 /// Class for implementing shared pointer to single object logic
 /// arrays are supported since C++17, but I still live in 2007
 template <typename T> class Shared_ptr
@@ -186,3 +189,4 @@ template <typename T, typename... Args> Shared_ptr<T> Make_shared(Args &&...args
 
     return Shared_ptr<T>(ctrl_block);
 }
+} // namespace MySTL

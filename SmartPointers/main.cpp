@@ -1,10 +1,12 @@
-#include "Shared_ptr.hpp"
-#include "Unique_ptr.hpp"
+#include "SharedPtr.hpp"
+#include "UniquePtr.hpp"
 #include <chrono>
 #include <memory>
 
 int main()
 {
+    using namespace MySTL;
+
     auto start = std::chrono::system_clock::now();
 
     Shared_ptr<int> orig_ptr(new int);

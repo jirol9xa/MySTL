@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <utility>
 
+namespace MySTL {
+
 /// Simple template class for implementing dinamically growing
 /// array logic. That provides only few methods and has no any
 /// control over the memory. Use only under your responsibility
@@ -184,3 +186,5 @@ template <typename T> class GrowingArray
             delete[] data_;
     }
 };
+
+}

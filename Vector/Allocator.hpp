@@ -8,6 +8,8 @@
 
 #include "GrowingArray.hpp"
 
+namespace MySTL {
+
 class Chunk
 {
     const char *begin_;
@@ -154,4 +156,5 @@ template <typename T> void StackStrategy<T>::deallocate(void *ptr, size_t obj_am
         if (chunk.is_inside(ptr, obj_amnt))
             chunk.deallocate();
     }
+}
 }

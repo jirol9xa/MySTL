@@ -5,6 +5,9 @@
 #include <stdexcept>
 #include <string>
 
+namespace MySTL
+{
+
 /// Class for implementing unique-pointer to single object logic
 template <typename T> class Unique_ptr
 {
@@ -106,3 +109,5 @@ Unique_ptr<T> Make_unique(size_t size)
 /// objects
 template <typename T, typename = std::enable_if_t<std::is_bounded_array_v<T>>>
 Unique_ptr<T[]> Make_unique() = delete;
+
+} // namespace MySTL
