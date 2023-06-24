@@ -3,16 +3,13 @@
 #include <atomic>
 #include <cstdlib>
 
-namespace MySTL
-{
+namespace MySTL {
 
 /// Class for implementing shared pointer to single object logic
 /// arrays are supported since C++17, but I still live in 2007
-template <typename T> class Shared_ptr
-{
+template <typename T> class Shared_ptr {
     /// Struct, that implement control block
-    struct ControlBlock
-    {
+    struct ControlBlock {
         std::atomic<size_t> reference_cnt = 0;
         // For Weak_ptr
         std::atomic<size_t> shadow_cnt = 0;
@@ -33,7 +30,7 @@ template <typename T> class Shared_ptr
 
     /// Method, that can use fact of locality, if we created an original object
     /// with Make_shared func. Using it is dangerous, because of null-defined objects
-    T *fast_get()
+    T *fast_get() const
     {
         if (mk_shr_ctred)
             return reinterpret_cast<T *>(
@@ -68,7 +65,6 @@ template <typename T> class Shared_ptr
         ctrl_block_->data_ = ptr;
         inc_ref_cnt();
     }
-
     Shared_ptr(const Shared_ptr &rhs)
         : mk_shr_ctred(rhs.mk_shr_ctred), ctrl_block_(rhs.ctrl_block_)
     {
@@ -114,12 +110,14 @@ template <typename T> class Shared_ptr
 
     void reset()
     {
-        ~(*this)();
+        // FIXME: Not the best idea, i guess
+        ~(*this);
         ctrl_block_ = nullptr;
     }
     template <typename U> void reset(U *ptr)
     {
-        ~(*this)();
+        // FIXME: Not the best idea, i guess
+        ~(*this);
 
         ctrl_block_        = new ControlBlock;
         ctrl_block_->data_ = ptr;
@@ -148,17 +146,15 @@ template <typename T> class Shared_ptr
         // If we made original object with Make_share() we have
         // control block and data block in one, so we must not delete
         // ControlBlock if we have Weak_ptr, that refers to that block
-        if (mk_shr_ctred)
-        {
-            if (!ctrl_block_->shadow_cnt)
-            {
+        if (mk_shr_ctred) {
+            if (!ctrl_block_->shadow_cnt) {
                 // We use delete [], because ctrl_block_ is pointer to the array,
                 // that was created in Make_share
                 // Explicit destructor for object called, because placement syntax
                 // doesn't provide "placement delete"
 
                 if constexpr (!std::is_trivially_destructible_v<T>)
-                    ~(*reinterpret_cast<T *>(ctrl_block_ + sizeof(ControlBlock)))();
+                    ~(*reinterpret_cast<T *>(ctrl_block_ + sizeof(ControlBlock)));
 
                 delete[] ctrl_block_;
                 return;
@@ -189,4 +185,5 @@ template <typename T, typename... Args> Shared_ptr<T> Make_shared(Args &&...args
 
     return Shared_ptr<T>(ctrl_block);
 }
+
 } // namespace MySTL

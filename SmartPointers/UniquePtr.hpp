@@ -5,12 +5,10 @@
 #include <stdexcept>
 #include <string>
 
-namespace MySTL
-{
+namespace MySTL {
 
 /// Class for implementing unique-pointer to single object logic
-template <typename T> class Unique_ptr
-{
+template <typename T> class Unique_ptr {
   private:
     T *ptr_ = nullptr;
 
@@ -27,6 +25,9 @@ template <typename T> class Unique_ptr
     }
     template <typename U> void reset(U *ptr)
     {
+        if (ptr == ptr_)
+            return;
+
         delete ptr_;
         ptr_ = ptr;
     }
@@ -53,8 +54,7 @@ template <typename T> class Unique_ptr
 };
 
 /// Specialisation for arrays of run-time length
-template <typename T> class Unique_ptr<T[]>
-{
+template <typename T> class Unique_ptr<T[]> {
   protected:
     T *arr_ = nullptr;
 
