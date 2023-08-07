@@ -47,7 +47,7 @@ template <typename InputIter> void RangePrinter(InputIter begin, InputIter end)
         return;
 
     for (auto iter = begin; iter != end; ++iter)
-        fprintf(stderr, "%d ", *iter); // std::cout << *iter << ' ';
+        std::cout << *iter << ' ';
     std::cout << '\n';
 }
 
@@ -64,9 +64,8 @@ bool IsRangesEq(InputIter begin1, InputIter end1, InputIter begin2)
 
 template <typename RandomIter> void Qsort(RandomIter begin, RandomIter end)
 {
-    if (MySTL::Next(begin) == end) {
+    if (MySTL::Next(begin) == end)
         return;
-    }
 
     auto left = begin, right = MySTL::Prev(end);
     auto pivot = *left;
