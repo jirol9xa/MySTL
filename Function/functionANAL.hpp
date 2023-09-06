@@ -17,6 +17,19 @@ template <typename Ret, typename... Param> class function<Ret(Param...)> {
     }
     function(const function &func) : func_p_(func.func_p_->clone()) {}
     function(function &&func) = default;
+    function &operator=(const function &func)
+    {
+        func_p_.reset(func.func_p_->clone().release());
+
+        return *this;
+    }
+
+    template <typename Callable> function &operator=(Callable func)
+    {
+        func_p_.reset(new CallableImpl<Callable>(std::move(func)));
+
+        return *this;
+    }
 
     Ret operator()(Param... args) { return func_p_->call(args...); }
 
