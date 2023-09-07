@@ -19,7 +19,7 @@ template <typename Ret, typename... Param> class function<Ret(Param...)> {
     function(function &&func) = default;
     function &operator=(const function &func)
     {
-        func_p_.reset(func.func_p_->clone().release());
+        func_p_ = std::move(func.func_p_->clone());
 
         return *this;
     }
