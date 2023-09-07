@@ -5,6 +5,8 @@
 
 namespace MySTL {
 
+// TODO: Separate data_ and reference counters (avoid one inderect jump by the ptr)
+
 /// Class for implementing shared pointer to single object logic
 /// arrays are supported since C++17, but I still live in 2007
 template <typename T> class Shared_ptr {
