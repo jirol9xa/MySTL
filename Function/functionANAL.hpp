@@ -31,12 +31,15 @@ template <typename Ret, typename... Param> class function<Ret(Param...)> {
         return *this;
     }
 
-    Ret operator()(Param... args) { return func_p_->call(args...); }
+    Ret operator()(Param &&...args)
+    {
+        return func_p_->call(std::forward<Param>(args)...);
+    }
 
   private:
     struct CallableInterface {
-        virtual Ret                                call(Param... par) = 0;
-        virtual std::unique_ptr<CallableInterface> clone()            = 0;
+        virtual Ret                                call(Param &&...par) = 0;
+        virtual std::unique_ptr<CallableInterface> clone()              = 0;
 
         virtual ~CallableInterface() = default;
     };
@@ -45,7 +48,10 @@ template <typename Ret, typename... Param> class function<Ret(Param...)> {
         CallableImpl() = default;
         CallableImpl(Callable func) : func_(std::move(func)) {}
 
-        Ret call(Param... par) override { return std::invoke(func_, par...); }
+        Ret call(Param &&...par) override
+        {
+            return std::invoke(func_, std::forward<Param>(par)...);
+        }
         std::unique_ptr<CallableInterface> clone() override
         {
             return std::make_unique<CallableImpl>(func_);
