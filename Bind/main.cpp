@@ -2,13 +2,13 @@
 #include <functional>
 #include <iostream>
 
-int sum(int a, int b) { return a + b; }
+void sum(int a, int b) { std::cout << a + b; }
 
 int main()
 {
     using namespace MySTL;
-    auto sum = bind<int(int, int), int, int>(::sum, 1, 2);
-    std::cout << sum() << '\n';
+    auto sum = bind(::sum, 1, 2);
+    sum();
 
     // auto f = bind([](int a, int b) { return a + b; }, 1, 2);
 
