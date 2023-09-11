@@ -2,13 +2,21 @@
 #include <functional>
 #include <iostream>
 
-void sum(int a, int b) { std::cout << a + b; }
+void sum(int a, int b) { std::cout << a + b << '\n'; }
+
+struct Test {
+    void sum(int a, int b) { std::cout << a + b << '\n'; }
+};
 
 int main()
 {
     using namespace MySTL;
-    auto sum = bind(::sum, 1, 2);
+    auto sum = bind(&::sum, 1, 2);
     sum();
+
+    Test test;
+    auto sum2 = MySTL::bind(&Test::sum, test, std::placeholders::_1, 2);
+    sum2(1);
 
     // auto f = bind([](int a, int b) { return a + b; }, 1, 2);
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdlib>
-#include <utility>
+#include <functional>
+#include <type_traits>
 
 namespace MySTL {
 template <std::size_t... Indices> struct indices {
@@ -34,7 +34,7 @@ template <std::size_t I, typename... Args>
 using type_at_index_t = typename type_at_index<I, Args...>::type;
 
 template <std::size_t I, typename T> struct arg {
-    explicit arg(T val) : val_(std::move(val)) {}
+    explicit arg(T val) : val_(val) {}
 
     const T val_;
 };
@@ -64,9 +64,21 @@ struct args_list : args_list_impl<typename make_indices<sizeof...(Args)>::type, 
 };
 
 template <std::size_t I, typename... Args>
-type_at_index_t<I, Args...> take_arg_at_index(args_list<Args...> &&args)
+type_at_index_t<I, Args...> get_arg(const args_list<Args...> &args)
 {
-    return static_cast<arg<I, Args...>>(args).val_;
+    return static_cast<arg<I, type_at_index_t<I, Args...>>>(args).val_;
+}
+
+template <typename T, typename U> T take_arg(const T &single_arg, const U &)
+{
+    return single_arg;
+}
+
+template <typename T, typename... Args, std::size_t I = std::is_placeholder_v<T>,
+          typename = typename std::enable_if_t<std::is_placeholder_v<T>>>
+type_at_index_t<I - 1, Args...> take_arg(const T &, const args_list<Args...> &lst)
+{
+    return get_arg<I - 1, Args...>(lst);
 }
 
 } // namespace MySTL
