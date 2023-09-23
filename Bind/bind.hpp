@@ -5,9 +5,10 @@
 
 namespace MySTL {
 
-template <typename Func, typename... BinderArgs> class binder {
+template <typename Func, typename... BinderArgs> class bind {
   public:
-    binder(const Func &func, BinderArgs &&...args)
+    template <typename FuncImpl, typename... BinderArgsImpl>
+    bind(const FuncImpl &func, BinderArgsImpl &&...args)
         : func_(std::move(func)), args_list_{std::forward<BinderArgs>(args)...}
     {
     }
@@ -59,9 +60,6 @@ template <typename Func, typename... BinderArgs> class binder {
 };
 
 template <typename Func, typename... Args>
-binder<Func, Args...> bind(const Func &func, Args &&...args)
-{
-    return binder<Func, Args...>{func, std::forward<Args>(args)...};
-}
+bind(const Func &, Args &&...) -> bind<Func, Args...>;
 
 } // namespace MySTL
