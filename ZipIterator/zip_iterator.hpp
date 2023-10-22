@@ -3,6 +3,8 @@
 #include <iterator>
 #include <utility>
 
+namespace MySTL {
+
 template <typename T> class ZipIterator {
     using iterType = typename T::iterator;
 
@@ -33,12 +35,6 @@ template <typename T> class ZipIterator {
     }
 };
 
-template <typename T> struct std::iterator_traits<ZipIterator<T>> {
-    using iterator_category = std::forward_iterator_tag;
-    using value_type        = std::pair<typename T::value_type, typename T::value_type>;
-    using difference_type   = ssize_t;
-};
-
 template <typename T> class Zipper {
     T &seq1_;
     T &seq2_;
@@ -51,4 +47,11 @@ template <typename T> class Zipper {
     ZipIterType begin() const { return {std::begin(seq1_), std::begin(seq2_)}; }
 
     ZipIterType end() const { return {std::end(seq1_), std::end(seq2_)}; }
+};
+} // namespace MySTL
+
+template <typename T> struct std::iterator_traits<MySTL::ZipIterator<T>> {
+    using iterator_category = std::forward_iterator_tag;
+    using value_type        = std::pair<typename T::value_type, typename T::value_type>;
+    using difference_type   = ssize_t;
 };

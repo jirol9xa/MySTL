@@ -5,6 +5,8 @@
 
 int main()
 {
+    using namespace MySTL;
+
     std::array<int, 10> arr1, arr2;
     std::iota(std::begin(arr1), std::end(arr1), 1);
     std::iota(std::begin(arr2), std::end(arr2), 10);
